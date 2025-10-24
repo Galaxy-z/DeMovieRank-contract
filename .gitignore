@@ -13,7 +13,4 @@ docs/
 # Dotenv file
 .env
 
-# Node modules
-lib/
-
 .github/
