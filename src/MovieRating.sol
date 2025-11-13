@@ -7,9 +7,9 @@ contract MovieRating {
     MovieFanSBT public movieFanSBT;
 
     // 用电影ID映射到评分列表
-    mapping(string => uint8[]) public ratingsByMovie;
+    mapping(string => uint16[]) public ratingsByMovie;
 
-    uint8 public constant SCALING_FACTOR = 100;
+    uint16 public constant SCALING_FACTOR = 100;
     
     // 事件，当有新评分时触发
     event NewRating(address indexed user, string movieId, uint8 rating);
@@ -20,7 +20,7 @@ contract MovieRating {
 
     modifier onlySBTHolder() {
         require(
-            movieFanSBT.balanceOf(msg.sender) > 0,
+            movieFanSBT.isMovieFan(msg.sender),
             "Only Movie Fan SBT holders can rate movies"
         );
         _;
@@ -31,12 +31,13 @@ contract MovieRating {
         require(_rating >= 1 && _rating <= 10, "Rating must be 1-10");
         
         ratingsByMovie[_movieId].push(_rating*SCALING_FACTOR);
+        movieFanSBT.increaseTotalRatings(msg.sender);
         emit NewRating(msg.sender, _movieId, _rating);
     }
 
     // 获取电影的平均评分
     function getAverageRating(string memory _movieId) public view returns (uint) {
-        uint8[] memory ratings = ratingsByMovie[_movieId];
+        uint16[] memory ratings = ratingsByMovie[_movieId];
         if (ratings.length == 0) {
             return 0;
         }

@@ -11,7 +11,8 @@ contract DeployScript is Script {
     function run() public {
         vm.startBroadcast();
         MovieFanSBT movieFanSBT = new MovieFanSBT(msg.sender);
-        new MovieRating(address(movieFanSBT));
+        MovieRating movieRating = new MovieRating(address(movieFanSBT));
+        movieFanSBT.setRatingContract(address(movieRating));
         vm.stopBroadcast();
     }
 }

@@ -11,6 +11,8 @@ contract MovieFanSBT is ERC721, Ownable {
 
     mapping(uint256 => FanProfile) public tokenToProfile;
 
+    address public ratingContract;
+
     struct FanProfile {
         address fanAddress;
         uint256 reputation;
@@ -20,10 +22,21 @@ contract MovieFanSBT is ERC721, Ownable {
 
     event SBTMinted(address indexed fanAddress, uint256 indexed tokenId);
     event ReputationUpdated(address indexed fanAddress, uint256 newReputation);
+    event RatingContractUpdated(address indexed ratingContract);
+
+    error UnauthorizedCaller(address caller);
+    error InvalidRatingContract(address ratingContract);
 
     constructor(
         address initialOwner
     ) ERC721("MovieFanSBT", "MFSBT") Ownable(initialOwner) {}
+
+    modifier onlyAuthorized() {
+        if (msg.sender != owner() && msg.sender != ratingContract) {
+            revert UnauthorizedCaller(msg.sender);
+        }
+        _;
+    }
 
     function mintSBT(address fanAddress) external onlyOwner {
         require(
@@ -72,6 +85,14 @@ contract MovieFanSBT is ERC721, Ownable {
         emit ReputationUpdated(fan, newReputation);
     }
 
+    function setRatingContract(address newRatingContract) external onlyOwner {
+        if (newRatingContract == address(0)) {
+            revert InvalidRatingContract(address(0));
+        }
+        ratingContract = newRatingContract;
+        emit RatingContractUpdated(newRatingContract);
+    }
+
     // 获取用户信誉分
     function getReputation(address fan) external view returns (uint256) {
         uint256 tokenId = addressToTokenId[fan];
@@ -89,4 +110,15 @@ contract MovieFanSBT is ERC721, Ownable {
     function isMovieFan(address fan) external view returns (bool) {
         return balanceOf(fan) > 0;
     }
+
+    // Called by the rating contract to keep the profile totals accurate
+    function increaseTotalRatings(address fan) external onlyAuthorized {
+        uint256 tokenId = addressToTokenId[fan];
+        require(tokenId != 0, "Fan does not have SBT");
+
+        FanProfile storage profile = tokenToProfile[tokenId];
+        profile.totalRatings += 1;
+    }
+
+
 }
