@@ -118,6 +118,8 @@ contract MovieFanSBT is ERC721, Ownable {
 
         FanProfile storage profile = tokenToProfile[tokenId];
         profile.totalRatings += 1;
+        profile.reputation += 10; // 每次评分增加 10 点声望
+        emit ReputationUpdated(fan, profile.reputation);
     }
 
 
